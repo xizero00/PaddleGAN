@@ -117,3 +117,4 @@ videos/
 haha.jpeg
 ppgan/faceutils/face_segmentation/faceseg_FCN-HRNetW18.pdparams
 ppgan/apps/photo2cartoon_genA2B_weight.pdparams
+run.sh
