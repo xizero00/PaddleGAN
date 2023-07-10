@@ -64,7 +64,7 @@ class AnimeGANPredictor(BasePredictor):
         brightness1, B1, G1, R1 = AnimeGANPredictor.calc_avg_brightness(src)
         brightness2, B2, G2, R2 = AnimeGANPredictor.calc_avg_brightness(dst)
         brightness_difference = brightness1 / brightness2
-        dstf = dst * brightness_difference
+        dstf = dst * brightness_difference * 1.2
         dstf = np.clip(dstf, 0, 255)
         dstf = np.uint8(dstf)
         return dstf
@@ -86,5 +86,26 @@ class AnimeGANPredictor(BasePredictor):
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
         save_path = os.path.join(self.output_path, 'anime.png')
+        cv2.imwrite(save_path, cv2.cvtColor(anime, cv2.COLOR_RGB2BGR))
+        return image
+    
+    def myrun(self, image):
+        filename = os.path.basename(image)
+        image = cv2.cvtColor(cv2.imread(image, flags=cv2.IMREAD_COLOR),
+                             cv2.COLOR_BGR2RGB)
+        transformed_image = self.transform(image)
+        anime = (self.generator(paddle.to_tensor(transformed_image[None, ...]))
+                 * 0.5 + 0.5)[0].numpy() * 255
+        anime = anime.transpose((1, 2, 0))
+        if anime.shape[:2] != image.shape[:2]:
+            # to original size
+            anime = T.resize(anime, image.shape[:2])
+        if self.use_adjust_brightness:
+            anime = self.adjust_brightness(anime, image)
+        else:
+            anime = anime.astype('uint8')
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path)
+        save_path = os.path.join(self.output_path, filename)
         cv2.imwrite(save_path, cv2.cvtColor(anime, cv2.COLOR_RGB2BGR))
         return image
